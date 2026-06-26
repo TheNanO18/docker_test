@@ -3,18 +3,13 @@ const BACKEND_BASE_URL = "http://134.185.112.214";
 module.exports = async function handler(req, res) {
   const targetUrl = `${BACKEND_BASE_URL}${buildBackendPath(req)}`;
 
-  const headers = { ...req.headers };
-  delete headers.host;
-  delete headers["x-forwarded-host"];
-  delete headers["x-forwarded-proto"];
-  delete headers["x-vercel-id"];
-  delete headers["content-length"];
+  const headers = buildHeaders(req);
 
   try {
     const response = await fetch(targetUrl, {
       method: req.method,
       headers,
-      body: ["GET", "HEAD"].includes(req.method) ? undefined : JSON.stringify(req.body),
+      body: buildBody(req),
       redirect: "manual",
     });
 
@@ -30,9 +25,29 @@ module.exports = async function handler(req, res) {
     res.status(502).json({
       error: "Backend proxy failed",
       message: error.message,
+      targetUrl,
     });
   }
 };
+
+function buildHeaders(req) {
+  const headers = {};
+  const allowedHeaders = ["accept", "authorization", "content-type", "cookie"];
+
+  allowedHeaders.forEach((key) => {
+    const value = req.headers[key];
+    if (value) headers[key] = value;
+  });
+
+  return headers;
+}
+
+function buildBody(req) {
+  if (["GET", "HEAD"].includes(req.method)) return undefined;
+  if (req.body === undefined || req.body === null) return undefined;
+  if (Buffer.isBuffer(req.body) || typeof req.body === "string") return req.body;
+  return JSON.stringify(req.body);
+}
 
 function buildBackendPath(req) {
   const rawPath = Array.isArray(req.query.path)
