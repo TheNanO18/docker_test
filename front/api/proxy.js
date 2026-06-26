@@ -2,7 +2,7 @@ const BACKEND_BASE_URL = "http://134.185.112.214";
 
 module.exports = async function handler(req, res) {
   const path = getPath(req);
-  const targetUrl = `${BACKEND_BASE_URL}/api/${path}${buildQueryString(req.query)}`;
+  const targetUrl = `${BACKEND_BASE_URL}/api/${withTrailingSlash(path)}${buildQueryString(req.query)}`;
 
   const headers = { ...req.headers };
   delete headers.host;
@@ -39,6 +39,11 @@ function getPath(req) {
   const path = req.query.path;
   if (Array.isArray(path)) return path.join("/");
   return path || "";
+}
+
+function withTrailingSlash(path) {
+  if (!path || path.endsWith("/")) return path;
+  return `${path}/`;
 }
 
 function buildQueryString(query) {
