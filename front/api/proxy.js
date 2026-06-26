@@ -1,8 +1,7 @@
 const BACKEND_BASE_URL = "http://134.185.112.214";
 
 module.exports = async function handler(req, res) {
-  const path = getPath(req);
-  const targetUrl = `${BACKEND_BASE_URL}/api/${withTrailingSlash(path)}${buildQueryString(req.query)}`;
+  const targetUrl = `${BACKEND_BASE_URL}${buildBackendPath(req)}`;
 
   const headers = { ...req.headers };
   delete headers.host;
@@ -35,15 +34,19 @@ module.exports = async function handler(req, res) {
   }
 };
 
-function getPath(req) {
-  const path = req.query.path;
-  if (Array.isArray(path)) return path.join("/");
-  return path || "";
-}
+function buildBackendPath(req) {
+  const rawPath = Array.isArray(req.query.path)
+    ? req.query.path.join("/")
+    : req.query.path || "";
+  const path = rawPath.startsWith("/") ? rawPath : `/api/${rawPath}`;
+  const [pathname, queryString = ""] = path.split("?");
+  const normalizedPath = pathname.endsWith("/") ? pathname : `${pathname}/`;
+  const extraQueryString = buildQueryString(req.query);
+  const joinedQueryString = [queryString, extraQueryString]
+    .filter(Boolean)
+    .join("&");
 
-function withTrailingSlash(path) {
-  if (!path || path.endsWith("/")) return path;
-  return `${path}/`;
+  return joinedQueryString ? `${normalizedPath}?${joinedQueryString}` : normalizedPath;
 }
 
 function buildQueryString(query) {
@@ -61,5 +64,5 @@ function buildQueryString(query) {
   });
 
   const queryString = params.toString();
-  return queryString ? `?${queryString}` : "";
+  return queryString;
 }

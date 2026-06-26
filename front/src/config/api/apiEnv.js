@@ -6,8 +6,8 @@ const isHttpsPage =
 
 const wouldCauseMixedContent = (url) => isHttpsPage && url.startsWith("http://");
 
-export const API_BASE = wouldCauseMixedContent(rawApiBase)
-  ? ""
+export const API_BASE = isHttpsPage && (!rawApiBase || wouldCauseMixedContent(rawApiBase))
+  ? "/api/proxy?path="
   : rawApiBase.replace(/\/$/, "");
 
 export const WS_BASE_URL = rawWsBase.replace(/\/$/, "");
