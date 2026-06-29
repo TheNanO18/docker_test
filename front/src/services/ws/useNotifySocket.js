@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { WS_BASE } from "../../config/api/apiEnv";
+import { WS_BASE, WS_ENABLED } from "../../config/api/apiEnv";
 
 export function useNotifySocket({ token, uuid, loginType, onMessage }) {
   const wsRef = useRef(null);
@@ -15,7 +15,10 @@ export function useNotifySocket({ token, uuid, loginType, onMessage }) {
     onMessageRef.current = onMessage;
   }, [onMessage]);
   useEffect(() => {
-    if (!token || !uuid || !loginType || !WS_BASE) return;
+    if (!token || !uuid || !loginType || !WS_BASE || !WS_ENABLED) {
+      setConnected(false);
+      return;
+    }
 
     let closedByCleanup = false;
 
@@ -31,8 +34,15 @@ export function useNotifySocket({ token, uuid, loginType, onMessage }) {
           ? `${WS_BASE}/ws/admin/request-monitor/?admin_uuid=${uuid}`
           : `${WS_BASE}/ws/user/request-monitor/?user_uuid=${uuid}`;
 
-      const ws = new WebSocket(wsUrl, [token]);
-      wsRef.current = ws;
+      let ws;
+      try {
+        ws = new WebSocket(wsUrl, [token]);
+        wsRef.current = ws;
+      } catch (error) {
+        console.warn("WebSocket connection skipped", error);
+        setConnected(false);
+        return;
+      }
 
       ws.onopen = () => {
         retryRef.current = 0;
