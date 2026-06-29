@@ -12,3 +12,5 @@ export const API_BASE = isHttpsPage && (!rawApiBase || wouldCauseMixedContent(ra
 
 export const WS_BASE_URL = rawWsBase.replace(/\/$/, "");
 export const WS_BASE = WS_BASE_URL;
+export const WS_ENABLED =
+  Boolean(WS_BASE_URL) && !(isHttpsPage && WS_BASE_URL.startsWith("ws://"));
