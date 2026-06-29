@@ -10,7 +10,10 @@ export const API_BASE = isHttpsPage && (!rawApiBase || wouldCauseMixedContent(ra
   ? "/api/proxy?path="
   : rawApiBase.replace(/\/$/, "");
 
-export const WS_BASE_URL = rawWsBase.replace(/\/$/, "");
+const normalizedWsBase = rawWsBase.trim().replace(/\/$/, "");
+const wouldCauseWsMixedContent =
+  isHttpsPage && normalizedWsBase.toLowerCase().startsWith("ws://");
+
+export const WS_BASE_URL = wouldCauseWsMixedContent ? "" : normalizedWsBase;
 export const WS_BASE = WS_BASE_URL;
-export const WS_ENABLED =
-  Boolean(WS_BASE_URL) && !(isHttpsPage && WS_BASE_URL.startsWith("ws://"));
+export const WS_ENABLED = Boolean(WS_BASE_URL);
